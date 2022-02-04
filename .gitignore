@@ -1,3 +1,14 @@
+# Project Specific
+data/*
+papers/*
+notes/*
+logs/*
+!data/csv
+!data/.gitkeep 
+!papers/.gitkeep 
+!notes/.gitkeep 
+!logs/.gitkeep 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
