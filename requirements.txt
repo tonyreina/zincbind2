@@ -1,0 +1,14 @@
+django==2.2.13
+atomium
+graphene_django
+kirjava
+tqdm
+graphene-file-upload
+django_cors_headers
+joblib
+
+numpy
+pandas
+scikit-learn==0.23.2
+
+python-coveralls
