@@ -1,0 +1,1 @@
+python get_data/generate_structure_data.py
