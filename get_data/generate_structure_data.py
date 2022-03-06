@@ -61,6 +61,7 @@ for family in families:
                 if (sample["ca_max"] <= 30): 
                 #     # positives.append(sample)
 
+                    sample["family"] = family
                     sample["pdb"] = site["id"]
                     sample["positive"] = 1
                      
@@ -71,11 +72,10 @@ for family in families:
             pbar.update()
 
         df_positives = df_positives.dropna()
-        print(df_positives)
         
         # Negatives
         all_codes = get_all_pdb_codes()
-        while df_negatives.shape[1] != df_positives.shape[1]:
+        while df_negatives.shape[0] < df_positives.shape[0]:
             code = random.choice(all_codes)
             try:
                 atomium_site = get_random_atomium_site(code, family)
@@ -94,6 +94,7 @@ for family in families:
 
                     if sample["ca_max"] <= 30:
                         # negatives.append(sample)
+                        sample["family"] = family
                         sample["pdb"] = site["id"]
                         sample["positive"] = 0
                         df_negatives = df_negatives.append(sample, ignore_index=True)
