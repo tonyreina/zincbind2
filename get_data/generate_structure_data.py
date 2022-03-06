@@ -5,6 +5,9 @@ import kirjava
 import atomium
 from tqdm import tqdm
 from common import structure_site_to_sample, sequence_site_to_sample
+
+import pandas as pd
+
 from utilities import *
 
 API_URL = "https://api.zincbind.net/"
@@ -20,14 +23,11 @@ FAMILY_SITES_QUERY = """query familySites($family: String) {
     } } }
 }"""
 
-# Python code to merge dict using a single
-# expression
-def Merge(dict1, dict2):
-    res = {**dict1, **dict2}
-    return res
-
 # Get options
 families = parse_data_args(sys.argv, clustering=False)
+
+df_positives = pd.DataFrame()
+df_negatives = pd.DataFrame()
 
 # Produce dataset for all families
 for family in families:
@@ -43,23 +43,39 @@ for family in families:
         # Positives
         for site in sites:
             try:
+
                 atomium_site = get_atomium_site(site)
                 sample_struct = structure_site_to_sample(atomium_site)
 
                 sequence = site["chainInteractions"][0]["sequence"]
                 sample_seq = sequence_site_to_sample(sequence)
 
-                sample = Merge(sample_struct, sample_seq)
+                sample = {}
+                for key, value in sample_struct.items():
+                    sample[key] = value
 
-                sample["pdb"] = site["id"]
+                for key, value in sample_seq.items():
+                    sample[key] = value
 
-                if sample["ca_max"] <= 30: positives.append(sample)
-            except Exception: failures.append(site["id"])
+                
+                if (sample["ca_max"] <= 30): 
+                #     # positives.append(sample)
+
+                    sample["pdb"] = site["id"]
+                    sample["positive"] = 1
+                     
+                    df_positives = df_positives.append(sample, ignore_index=True)
+                
+            except Exception: 
+                failures.append(site["id"])
             pbar.update()
+
+        df_positives = df_positives.dropna()
+        print(df_positives)
         
         # Negatives
         all_codes = get_all_pdb_codes()
-        while len(negatives) != len(positives):
+        while df_negatives.shape[1] != df_positives.shape[1]:
             code = random.choice(all_codes)
             try:
                 atomium_site = get_random_atomium_site(code, family)
@@ -69,11 +85,18 @@ for family in families:
                     sequence = site["chainInteractions"][0]["sequence"]
                     sample_seq = sequence_site_to_sample(sequence)
 
-                    sample = Merge(sample_struct, sample_seq)
-                    sample["pdb"] = site["id"]
+                    sample = {}
+                    for key, value in sample_struct.items():
+                        sample[key] = value
+
+                    for key, value in sample_seq.items():
+                        sample[key] = value   
 
                     if sample["ca_max"] <= 30:
-                        negatives.append(sample)
+                        # negatives.append(sample)
+                        sample["pdb"] = site["id"]
+                        sample["positive"] = 0
+                        df_negatives = df_negatives.append(sample, ignore_index=True)
                         pbar.update()
             except Exception: pass
 
@@ -82,6 +105,6 @@ for family in families:
     
     # Create CSV file for family
     save_csv(
-        positives, negatives, family, None,
+        df_positives, df_negatives, family, None,
         os.path.join("data", "csv", "structure")
     )

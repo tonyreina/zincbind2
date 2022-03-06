@@ -10,6 +10,7 @@ from io import BytesIO
 import gzip
 import json
 import kirjava
+import pandas as pd
 import atomium
 from collections import Counter
 import sys
@@ -68,22 +69,32 @@ def split_family(family):
     subfamilies.append([subfamily[0], int(subfamily[1:])])
     return subfamilies
 
-
 def save_csv(positives, negatives, name, similarity, path):
     """Takes a list of positive samples and a list of negative samples, and
     saves them to CSV."""
 
-    if not positives and not negatives: return
     similarity = f"_{int(similarity * 100)}" if similarity else ""
     path = f"{path}{os.path.sep}{name}{similarity}.csv"
-    lines = []
-    flag = "w"
-    lines.append(",".join((positives + negatives)[0].keys()) + ",positive")
-    for index, samples in enumerate([positives, negatives]):
-        for sample in samples:
-            lines.append(",".join([str(v) for v in sample.values()] + [str(1 - index)]))
-    with open(path, flag) as f:
-        f.write("\n".join(lines) + "\n")
+    
+    df = pd.concat([positives, negatives])
+    df.dropna().to_csv(path)
+
+
+# def save_csv(positives, negatives, name, similarity, path):
+#     """Takes a list of positive samples and a list of negative samples, and
+#     saves them to CSV."""
+
+#     if not positives and not negatives: return
+#     similarity = f"_{int(similarity * 100)}" if similarity else ""
+#     path = f"{path}{os.path.sep}{name}{similarity}.csv"
+#     lines = []
+#     flag = "w"
+#     lines.append(",".join((positives + negatives)[0].keys()) + ",positive")
+#     for index, samples in enumerate([positives, negatives]):
+#         for sample in samples:
+#             lines.append(",".join([str(v) for v in sample.values()] + [str(1 - index)]))
+#     with open(path, flag) as f:
+#         f.write("\n".join(lines) + "\n")
 
 
 def cluster_sequences(sequences, similarity):
